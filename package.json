@@ -1,13 +1,8 @@
 {
-  "name": "21st-desktop",
+  "name": "jarvis-desktop",
   "version": "0.0.72",
   "private": true,
   "description": "1Code - UI for parallel work with AI agents",
-  "homepage": "https://21st.dev",
-  "author": {
-    "name": "21st.dev",
-    "email": "support@21st.dev"
-  },
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -60,6 +55,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@radix-ui/react-visually-hidden": "^1.2.3",
     "@sentry/electron": "^7.5.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.10",
@@ -140,12 +136,12 @@
     "vite": "^6.3.4"
   },
   "build": {
-    "appId": "dev.21st.agents",
-    "productName": "1Code",
+    "appId": "dev.jarvis.agents",
+    "productName": "Jarvis",
     "npmRebuild": true,
     "protocols": [
       {
-        "name": "1Code",
+        "name": "Jarvis",
         "schemes": [
           "twentyfirst-agents"
         ]
@@ -259,6 +255,9 @@
   "pnpm": {
     "overrides": {
       "source-map-support>source-map": "0.7.4"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "electron"
+    ]
   }
 }
