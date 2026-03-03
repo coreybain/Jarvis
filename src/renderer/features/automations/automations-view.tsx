@@ -1,21 +1,28 @@
-"use client"
+"use client";
 
-import "./automations-styles.css"
-import { useAtomValue, useSetAtom, useAtom } from "jotai"
-import { selectedTeamIdAtom } from "../../lib/atoms"
+import "./automations-styles.css";
+import { useAtomValue, useSetAtom, useAtom } from "jotai";
+import {
+  selectedTeamIdAtom,
+  isDesktopAtom,
+  isFullscreenAtom,
+} from "../../lib/atoms";
 import {
   desktopViewAtom,
   automationDetailIdAtom,
   automationTemplateParamsAtom,
   agentsSidebarOpenAtom,
   agentsMobileViewModeAtom,
-} from "../agents/atoms"
-import { Logo } from "../../components/ui/logo"
-import { useState, useMemo, useCallback } from "react"
-import { Plus, AlignJustify } from "lucide-react"
-import { useIsMobile } from "../../lib/hooks/use-mobile"
-import { remoteTrpc } from "../../lib/remote-trpc"
-import { useQuery } from "@tanstack/react-query"
+  agentsUnseenChangesAtom,
+} from "../agents/atoms";
+import { Logo } from "../../components/ui/logo";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, AlignJustify } from "lucide-react";
+import { useIsMobile } from "../../lib/hooks/use-mobile";
+import { AgentsHeaderControls } from "../agents/ui/agents-header-controls";
+import { TrafficLightSpacer } from "../agents/components/traffic-light-spacer";
+import { remoteTrpc } from "../../lib/remote-trpc";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   AutomationCard,
@@ -24,96 +31,107 @@ import {
   AUTOMATION_TEMPLATES,
   type ViewTab,
   type Platform,
-} from "./_components"
+} from "./_components";
 
 export function AutomationsView() {
-  const teamId = useAtomValue(selectedTeamIdAtom)
-  const setDesktopView = useSetAtom(desktopViewAtom)
-  const setAutomationDetailId = useSetAtom(automationDetailIdAtom)
-  const setTemplateParams = useSetAtom(automationTemplateParamsAtom)
-  const [sidebarOpen, setSidebarOpen] = useAtom(agentsSidebarOpenAtom)
-  const setMobileViewMode = useSetAtom(agentsMobileViewModeAtom)
-  const isMobile = useIsMobile()
+  const teamId = useAtomValue(selectedTeamIdAtom);
+  const setDesktopView = useSetAtom(desktopViewAtom);
+  const setAutomationDetailId = useSetAtom(automationDetailIdAtom);
+  const setTemplateParams = useSetAtom(automationTemplateParamsAtom);
+  const [sidebarOpen, setSidebarOpen] = useAtom(agentsSidebarOpenAtom);
+  const setMobileViewMode = useSetAtom(agentsMobileViewModeAtom);
+  const isMobile = useIsMobile();
+  const isDesktop = useAtomValue(isDesktopAtom);
+  const isFullscreen = useAtomValue(isFullscreenAtom);
+  const unseenChanges = useAtomValue(agentsUnseenChangesAtom);
+  const hasAnyUnseenChanges = unseenChanges.size > 0;
+  const isDesktopDragRegionEnabled = isDesktop && isFullscreen !== true;
 
   const handleSidebarToggle = useCallback(() => {
     if (isMobile) {
-      setDesktopView(null)
-      setMobileViewMode("chats")
+      setDesktopView(null);
+      setMobileViewMode("chats");
     } else {
-      setSidebarOpen(true)
+      setSidebarOpen(true);
     }
-  }, [isMobile, setDesktopView, setMobileViewMode, setSidebarOpen])
+  }, [isMobile, setDesktopView, setMobileViewMode, setSidebarOpen]);
 
-  const [activeTab, setActiveTab] = useState<ViewTab>("active")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState<ViewTab>("active");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch automations via remoteTrpc
   const { data: automationsData, isLoading } = useQuery({
     queryKey: ["automations", "list", teamId],
-    queryFn: () => remoteTrpc.automations.listAutomations.query({ teamId: teamId! }),
+    queryFn: () =>
+      remoteTrpc.automations.listAutomations.query({ teamId: teamId! }),
     enabled: !!teamId,
-  })
+  });
 
   // Fetch GitHub connection status
   const { data: githubStatus } = useQuery({
     queryKey: ["github", "connectionStatus", teamId],
-    queryFn: () => remoteTrpc.github.getConnectionStatus.query({ teamId: teamId! }),
+    queryFn: () =>
+      remoteTrpc.github.getConnectionStatus.query({ teamId: teamId! }),
     enabled: !!teamId,
-  })
+  });
 
   // Fetch Linear integration status
   const { data: linearStatus } = useQuery({
     queryKey: ["linear", "integration", teamId],
     queryFn: () => remoteTrpc.linear.getIntegration.query({ teamId: teamId! }),
     enabled: !!teamId,
-  })
+  });
 
-  const automations = automationsData ?? []
+  const automations = automationsData ?? [];
 
   // Filter automations by search query
   const filteredAutomations = useMemo(() => {
-    if (!searchQuery.trim()) return automations
-    const query = searchQuery.toLowerCase()
+    if (!searchQuery.trim()) return automations;
+    const query = searchQuery.toLowerCase();
     return automations.filter((a: any) =>
-      a.name?.toLowerCase().includes(query)
-    )
-  }, [automations, searchQuery])
+      a.name?.toLowerCase().includes(query),
+    );
+  }, [automations, searchQuery]);
 
   const handleNewAutomation = () => {
-    setAutomationDetailId("new")
-    setTemplateParams(null)
-    setDesktopView("automations-detail")
-  }
+    setAutomationDetailId("new");
+    setTemplateParams(null);
+    setDesktopView("automations-detail");
+  };
 
-  const handleUseTemplate = (template: typeof AUTOMATION_TEMPLATES[number]) => {
-    setAutomationDetailId("new")
+  const handleUseTemplate = (
+    template: (typeof AUTOMATION_TEMPLATES)[number],
+  ) => {
+    setAutomationDetailId("new");
     setTemplateParams({
       name: template.name,
       platform: template.platform,
       trigger: template.triggerType,
       instructions: template.instructions,
-    })
-    setDesktopView("automations-detail")
-  }
+    });
+    setDesktopView("automations-detail");
+  };
 
   const handleAutomationClick = (automationId: string) => {
-    setAutomationDetailId(automationId)
-    setTemplateParams(null)
-    setDesktopView("automations-detail")
-  }
+    setAutomationDetailId(automationId);
+    setTemplateParams(null);
+    setDesktopView("automations-detail");
+  };
 
-  const isGithubConnected = githubStatus?.isConnected ?? false
-  const isLinearConnected = linearStatus?.isConnected ?? false
+  const isGithubConnected = githubStatus?.isConnected ?? false;
+  const isLinearConnected = linearStatus?.isConnected ?? false;
 
-  const getTemplateDisabledReason = (platform: Platform): string | undefined => {
+  const getTemplateDisabledReason = (
+    platform: Platform,
+  ): string | undefined => {
     if (platform === "github" && !isGithubConnected) {
-      return "Connect GitHub in Settings to use this template"
+      return "Connect GitHub in Settings to use this template";
     }
     if (platform === "linear" && !isLinearConnected) {
-      return "Connect Linear in Settings to use this template"
+      return "Connect Linear in Settings to use this template";
     }
-    return undefined
-  }
+    return undefined;
+  };
 
   // Loading state
   if (!teamId) {
@@ -121,27 +139,64 @@ export function AutomationsView() {
       <div className="flex items-center justify-center h-full">
         <Logo className="h-8 w-8 animate-pulse text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="h-full flex flex-col overflow-hidden" data-automations-page>
-      <div className="flex-1 overflow-y-auto px-4 md:px-2 py-4">
+      {/* Draggable header with sidebar toggle */}
+      <div
+        className="flex-shrink-0 bg-background"
+        style={
+          isDesktopDragRegionEnabled
+            ? {
+                // @ts-expect-error - WebKit-specific property
+                WebkitAppRegion: "drag",
+              }
+            : undefined
+        }
+      >
+        <div className="flex items-center justify-between p-1.5">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            {isMobile ? (
+              <button
+                onClick={handleSidebarToggle}
+                className="h-7 w-7 p-0 flex items-center justify-center hover:bg-foreground/10 transition-[background-color,transform] duration-150 ease-out active:scale-[0.97] flex-shrink-0 rounded-md text-muted-foreground hover:text-foreground"
+                aria-label="Back to chats"
+              >
+                <AlignJustify className="h-4 w-4" />
+              </button>
+            ) : (
+              <>
+                {!sidebarOpen ? (
+                  <AgentsHeaderControls
+                    isSidebarOpen={sidebarOpen}
+                    onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+                    hasUnseenChanges={hasAnyUnseenChanges}
+                  />
+                ) : (
+                  <TrafficLightSpacer
+                    isDesktop={isDesktop}
+                    isFullscreen={isFullscreen}
+                    height={16}
+                    removeYMargin={true}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 md:px-2 pb-4">
         <div className={isMobile ? "max-w-full" : "max-w-2xl mx-auto"}>
           {/* Header */}
           <div className="mb-6 flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1 flex items-center gap-2">
-              {(!sidebarOpen || isMobile) && (
-                <button
-                  onClick={handleSidebarToggle}
-                  className="h-7 w-7 p-0 flex items-center justify-center hover:bg-foreground/10 transition-[background-color,transform] duration-150 ease-out active:scale-[0.97] flex-shrink-0 rounded-md text-muted-foreground hover:text-foreground"
-                  aria-label={isMobile ? "Back to chats" : "Open sidebar"}
-                >
-                  <AlignJustify className="h-4 w-4" />
-                </button>
-              )}
               <div>
-                <h1 className="text-lg font-semibold text-foreground">Automations</h1>
+                <h1 className="text-lg font-semibold text-foreground">
+                  Automations
+                </h1>
                 <p className="text-sm text-muted-foreground hidden min-420:block">
                   Background automations for your repositories
                 </p>
@@ -152,7 +207,9 @@ export function AutomationsView() {
               className="h-8 px-3 rounded-lg text-sm font-medium border border-border hover:bg-foreground/10 transition-[background-color,transform] duration-150 ease-out active:scale-[0.97] text-foreground flex items-center gap-1.5 flex-shrink-0"
             >
               <Plus className="h-4 w-4" />
-              <span className="text-sm font-medium hidden min-420:inline">New</span>
+              <span className="text-sm font-medium hidden min-420:inline">
+                New
+              </span>
             </button>
           </div>
 
@@ -198,7 +255,9 @@ export function AutomationsView() {
               {activeTab === "templates" && (
                 <div className="grid grid-cols-1 min-420:grid-cols-2 md:grid-cols-3 gap-2 mt-3">
                   {AUTOMATION_TEMPLATES.map((template) => {
-                    const disabledReason = getTemplateDisabledReason(template.platform)
+                    const disabledReason = getTemplateDisabledReason(
+                      template.platform,
+                    );
                     return (
                       <TemplateCard
                         key={template.id}
@@ -207,7 +266,7 @@ export function AutomationsView() {
                         disabled={!!disabledReason}
                         disabledReason={disabledReason}
                       />
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -229,13 +288,16 @@ export function AutomationsView() {
                     <div className="flex flex-col">
                       {searchQuery ? (
                         <div className="text-center py-12 text-muted-foreground">
-                          <p className="text-sm">No automations match your search.</p>
+                          <p className="text-sm">
+                            No automations match your search.
+                          </p>
                         </div>
                       ) : (
                         <>
                           <div className="text-center py-8 text-muted-foreground">
                             <p className="text-sm">
-                              No automations yet. Get started with a template below.
+                              No automations yet. Get started with a template
+                              below.
                             </p>
                           </div>
 
@@ -246,16 +308,19 @@ export function AutomationsView() {
                             </h3>
                             <div className="grid grid-cols-1 min-420:grid-cols-2 md:grid-cols-3 gap-2">
                               {AUTOMATION_TEMPLATES.map((template) => {
-                                const disabledReason = getTemplateDisabledReason(template.platform)
+                                const disabledReason =
+                                  getTemplateDisabledReason(template.platform);
                                 return (
                                   <TemplateCard
                                     key={template.id}
                                     template={template}
-                                    onUseTemplate={() => handleUseTemplate(template)}
+                                    onUseTemplate={() =>
+                                      handleUseTemplate(template)
+                                    }
                                     disabled={!!disabledReason}
                                     disabledReason={disabledReason}
                                   />
-                                )
+                                );
                               })}
                             </div>
                           </div>
@@ -270,5 +335,5 @@ export function AutomationsView() {
         </div>
       </div>
     </div>
-  )
+  );
 }

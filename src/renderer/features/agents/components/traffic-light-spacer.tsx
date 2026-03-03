@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import { cn } from "../../../lib/utils"
+import { useEffect, useRef, useState } from "react";
+import { cn } from "../../../lib/utils";
 
 /**
  * Invisible no-drag zone over native macOS traffic lights.
@@ -13,11 +13,11 @@ export function TrafficLights({
   isDesktop = false,
   className = "",
 }: {
-  isFullscreen?: boolean | null
-  isDesktop?: boolean
-  className?: string
+  isFullscreen?: boolean | null;
+  isDesktop?: boolean;
+  className?: string;
 }) {
-  if (!isDesktop || isFullscreen === true) return null
+  if (!isDesktop || isFullscreen === true) return null;
 
   return (
     <div
@@ -35,7 +35,7 @@ export function TrafficLights({
         <div className="w-3 h-3" />
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -51,13 +51,17 @@ export function TrafficLightSpacer({
   isFullscreen = null,
   isDesktop = false,
   className = "",
+  height = 32,
+  removeYMargin = false,
 }: {
-  isFullscreen?: boolean | null
-  isDesktop?: boolean
-  className?: string
+  isFullscreen?: boolean | null;
+  isDesktop?: boolean;
+  className?: string;
+  height?: number;
+  removeYMargin?: boolean;
 }) {
-  const prevFullscreenRef = useRef(isFullscreen)
-  const [shouldAnimate, setShouldAnimate] = useState(false)
+  const prevFullscreenRef = useRef(isFullscreen);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
     if (
@@ -65,23 +69,24 @@ export function TrafficLightSpacer({
       prevFullscreenRef.current !== null &&
       prevFullscreenRef.current !== isFullscreen
     ) {
-      setShouldAnimate(true)
+      setShouldAnimate(true);
     }
-    prevFullscreenRef.current = isFullscreen
-  }, [isFullscreen])
+    prevFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
 
-  const shouldShow = isDesktop && isFullscreen !== true
+  const shouldShow = isDesktop && isFullscreen !== true;
 
   return (
     <div
       className={cn(
         "w-full shrink-0 overflow-hidden",
         shouldAnimate && "transition-[height] duration-200 ease-out",
+        removeYMargin && "-my-[1px]",
         className,
       )}
-      style={{ height: shouldShow ? 32 : 0 }}
+      style={{ height: shouldShow ? height : 0 }}
     />
-  )
+  );
 }
 
 /**
@@ -97,5 +102,5 @@ export function NoDrag({ children }: { children: React.ReactNode }) {
     >
       {children}
     </div>
-  )
+  );
 }

@@ -1,21 +1,27 @@
-import { memo, useMemo } from "react"
-import { KanbanColumn } from "./kanban-column"
-import type { KanbanCardData } from "./kanban-card"
-import type { SubChatStatus } from "../lib/derive-status"
+import { memo, useMemo } from "react";
+import { KanbanColumn } from "./kanban-column";
+import type { KanbanCardData } from "./kanban-card";
+import type { SubChatStatus } from "../lib/derive-status";
 
 interface KanbanBoardProps {
-  cards: KanbanCardData[]
-  pinnedChatIds: Set<string>
-  isMultiSelectMode: boolean
-  selectedChatIds: Set<string>
-  onCardClick: (card: KanbanCardData, e: React.MouseEvent) => void
-  onCheckboxClick: (e: React.MouseEvent, chatId: string) => void
-  onTogglePin: (chatId: string) => void
-  onRename: (chat: { id: string; name: string | null }) => void
-  onArchive: (chatId: string) => void
-  onCopyBranch: (branch: string) => void
-  onExportChat: (params: { chatId: string; format: "markdown" | "json" | "text" }) => void
-  onCopyChat: (params: { chatId: string; format: "markdown" | "json" | "text" }) => void
+  cards: KanbanCardData[];
+  pinnedChatIds: Set<string>;
+  isMultiSelectMode: boolean;
+  selectedChatIds: Set<string>;
+  onCardClick: (card: KanbanCardData, e: React.MouseEvent) => void;
+  onCheckboxClick: (e: React.MouseEvent, chatId: string) => void;
+  onTogglePin: (chatId: string) => void;
+  onRename: (chat: { id: string; name: string | null }) => void;
+  onArchive: (chatId: string) => void;
+  onCopyBranch: (branch: string) => void;
+  onExportChat: (params: {
+    chatId: string;
+    format: "markdown" | "json" | "text";
+  }) => void;
+  onCopyChat: (params: {
+    chatId: string;
+    format: "markdown" | "json" | "text";
+  }) => void;
 }
 
 // 4 columns: drafts + workspace statuses
@@ -24,7 +30,7 @@ const COLUMNS: { status: SubChatStatus; title: string }[] = [
   { status: "in-progress", title: "In Progress" },
   { status: "needs-input", title: "Need Input" },
   { status: "done", title: "Done" },
-]
+];
 
 export const KanbanBoard = memo(function KanbanBoard({
   cards,
@@ -45,19 +51,19 @@ export const KanbanBoard = memo(function KanbanBoard({
       "in-progress": [],
       "needs-input": [],
       done: [],
-    }
+    };
 
     for (const card of cards) {
-      grouped[card.status].push(card)
+      grouped[card.status].push(card);
     }
 
-    return grouped
-  }, [cards])
+    return grouped;
+  }, [cards]);
 
   return (
     <div className="h-full overflow-x-auto">
       {/* Centered container with max-width */}
-      <div className="flex gap-3 h-full px-4 py-2 mx-auto max-w-5xl min-w-min">
+      <div className="flex gap-3 h-full px-4 pb-2 mx-auto max-w-5xl min-w-min">
         {COLUMNS.map((column) => (
           <KanbanColumn
             key={column.status}
@@ -77,5 +83,5 @@ export const KanbanBoard = memo(function KanbanBoard({
         ))}
       </div>
     </div>
-  )
-})
+  );
+});
