@@ -317,7 +317,7 @@ const server = createServer((req, res) => {
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="${FAVICON_DATA_URI}">
-  <title>1Code - Authentication</title>
+  <title>Jarvis - Authentication</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -401,7 +401,7 @@ const server = createServer((req, res) => {
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="${FAVICON_DATA_URI}">
-  <title>1Code - MCP Authentication</title>
+  <title>Jarvis - MCP Authentication</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -571,10 +571,10 @@ if (gotTheLock) {
 
     // Set app user model ID for Windows (different in dev to avoid taskbar conflicts)
     if (process.platform === "win32") {
-      app.setAppUserModelId(IS_DEV ? "dev.21st.1code.dev" : "dev.21st.1code")
+      app.setAppUserModelId(IS_DEV ? "dev.21st.jarvis.dev" : "dev.21st.jarvis")
     }
 
-    console.log(`[App] Starting 1Code${IS_DEV ? " (DEV)" : ""}...`)
+    console.log(`[App] Starting Jarvis${IS_DEV ? " (DEV)" : ""}...`)
 
     // Verify protocol registration after app is ready
     // This helps diagnose first-install issues where the protocol isn't recognized yet
@@ -598,7 +598,7 @@ if (gotTheLock) {
 
     // Set About panel options with Claude Code version
     app.setAboutPanelOptions({
-      applicationName: "1Code",
+      applicationName: "Jarvis",
       applicationVersion: app.getVersion(),
       version: `Claude Code ${claudeCodeVersion}`,
       copyright: "Copyright © 2026 21st.dev",
@@ -628,7 +628,7 @@ if (gotTheLock) {
           label: app.name,
           submenu: [
             {
-              label: "About 1Code",
+              label: "About Jarvis",
               click: () => app.showAboutPanel(),
             },
             {
@@ -664,8 +664,8 @@ if (gotTheLock) {
             { type: "separator" },
             {
               label: isCliInstalled()
-                ? "Uninstall '1code' Command..."
-                : "Install '1code' Command in PATH...",
+                ? "Uninstall 'jarvis' Command..."
+                : "Install 'jarvis' Command in PATH...",
               ...(terminalMenuIcon && { icon: terminalMenuIcon }),
               click: async () => {
                 const { dialog } = await import("electron")
@@ -675,7 +675,7 @@ if (gotTheLock) {
                     dialog.showMessageBox({
                       type: "info",
                       message: "CLI command uninstalled",
-                      detail: "The '1code' command has been removed from your PATH.",
+                      detail: "The 'jarvis' command has been removed from your PATH.",
                     })
                     buildMenu()
                   } else {
@@ -688,7 +688,7 @@ if (gotTheLock) {
                       type: "info",
                       message: "CLI command installed",
                       detail:
-                        "You can now use '1code .' in any terminal to open 1Code in that directory.",
+                        "You can now use 'jarvis .' in any terminal to open Jarvis in that directory.",
                     })
                     buildMenu()
                   } else {
@@ -973,7 +973,7 @@ if (gotTheLock) {
       }
     }, 3000)
 
-    // Handle directory argument from CLI (e.g., `1code /path/to/project`)
+    // Handle directory argument from CLI (e.g., `jarvis /path/to/project`)
     parseLaunchDirectory()
 
     // Handle deep link from app launch (Windows/Linux)
