@@ -12,7 +12,6 @@ import {
   createTeamDialogOpenAtom,
   agentsSettingsDialogActiveTabAtom,
   agentsSidebarOpenAtom,
-  agentsHelpPopoverOpenAtom,
   selectedAgentChatIdsAtom,
   isAgentMultiSelectModeAtom,
   toggleAgentChatSelectionAtom,
@@ -25,6 +24,7 @@ import {
   chatSourceModeAtom,
   selectedTeamIdAtom,
   type ChatSourceMode,
+  type SettingsTab,
   showWorkspaceIconAtom,
   betaKanbanEnabledAtom,
   betaAutomationsEnabledAtom,
@@ -40,14 +40,20 @@ import {
 } from "../../lib/hooks/use-remote-chats"
 import { usePrefetchLocalChat } from "../../lib/hooks/use-prefetch-local-chat"
 import { ArchivePopover } from "../agents/ui/archive-popover"
-import { ChevronDown, MoreHorizontal, Columns3, ArrowUpRight } from "lucide-react"
+import { ChevronDown, MoreHorizontal, Columns3, ArrowUpRight, MessageSquare } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
 import { remoteTrpc } from "../../lib/remote-trpc"
 // import { useRouter } from "next/navigation" // Desktop doesn't use next/navigation
 // import { useCombinedAuth } from "@/lib/hooks/use-combined-auth"
-const useCombinedAuth = () => ({ userId: null })
+const useCombinedAuth = () => ({ userId: null, isLoaded: true })
 // import { AuthDialog } from "@/components/auth/auth-dialog"
-const AuthDialog = () => null
+const AuthDialog = ({
+  open: _open,
+  onOpenChange: _onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) => null
 // Desktop: archive is handled inline, not via hook
 // import { DiscordIcon } from "@/components/icons"
 import { DiscordIcon } from "../../icons"
@@ -88,7 +94,6 @@ import {
   SettingsIcon,
   PlusIcon,
   ProfileIcon,
-  PublisherStudioIcon,
   SearchIcon,
   GitHubLogo,
   LoadingDot,
@@ -97,7 +102,6 @@ import {
   QuestionCircleIcon,
   QuestionIcon,
   KeyboardIcon,
-  TicketIcon,
   CloudIcon,
 } from "../../components/ui/icons"
 import { Logo } from "../../components/ui/logo"
@@ -123,7 +127,6 @@ import {
 import { NetworkStatus } from "../../components/ui/network-status"
 import { useAgentSubChatStore, OPEN_SUB_CHATS_CHANGE_EVENT } from "../agents/stores/sub-chat-store"
 import { getWindowId } from "../../contexts/WindowContext"
-import { AgentsHelpPopover } from "../agents/components/agents-help-popover"
 import { getShortcutKey, isDesktopApp } from "../../lib/utils/platform"
 import { useResolvedHotkeyDisplay, useResolvedHotkeyDisplayWithAlt } from "../../lib/hotkeys"
 import { pluralize } from "../agents/utils/pluralize"
@@ -137,10 +140,6 @@ import { Checkbox } from "../../components/ui/checkbox"
 import { useHaptic } from "./hooks/use-haptic"
 import { TypewriterText } from "../../components/ui/typewriter-text"
 import { exportChat, copyChat, type ExportFormat } from "../agents/lib/export-chat"
-
-// Feedback URL: uses env variable for hosted version, falls back to public Discord for open source
-const FEEDBACK_URL =
-  import.meta.env.VITE_FEEDBACK_URL || "https://discord.gg/8ektTZGnj4"
 
 // GitHub avatar with loading placeholder
 const GitHubAvatar = React.memo(function GitHubAvatar({
@@ -1075,47 +1074,6 @@ const ArchiveButton = memo(forwardRef<HTMLButtonElement, React.ButtonHTMLAttribu
   }
 ))
 
-// Isolated Kanban Button - clears selection to show Kanban view
-const KanbanButton = memo(function KanbanButton() {
-  const kanbanEnabled = useAtomValue(betaKanbanEnabledAtom)
-  const setSelectedChatId = useSetAtom(selectedAgentChatIdAtom)
-  const setSelectedDraftId = useSetAtom(selectedDraftIdAtom)
-  const setShowNewChatForm = useSetAtom(showNewChatFormAtom)
-  const setDesktopView = useSetAtom(desktopViewAtom)
-
-  // Resolved hotkey for tooltip (respects custom bindings)
-  const openKanbanHotkey = useResolvedHotkeyDisplay("open-kanban")
-
-  const handleClick = useCallback(() => {
-    // Clear selected chat, draft, and new form state to show Kanban view
-    setSelectedChatId(null)
-    setSelectedDraftId(null)
-    setShowNewChatForm(false)
-    setDesktopView(null) // Clear automations/inbox view
-  }, [setSelectedChatId, setSelectedDraftId, setShowNewChatForm, setDesktopView])
-
-  // Hide button if feature is disabled
-  if (!kanbanEnabled) return null
-
-  return (
-    <Tooltip delayDuration={500}>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={handleClick}
-          className="flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-        >
-          <Columns3 className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>
-        Kanban View
-        {openKanbanHotkey && <Kbd>{openKanbanHotkey}</Kbd>}
-      </TooltipContent>
-    </Tooltip>
-  )
-})
-
 // Custom SVG icons matching web's icons.tsx
 function SidebarInboxIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -1279,11 +1237,11 @@ interface SidebarHeaderProps {
   onSignOut: () => void
   onToggleSidebar?: () => void
   setSettingsDialogOpen: (open: boolean) => void
-  setSettingsActiveTab: (tab: string) => void
+  setSettingsActiveTab: (tab: SettingsTab) => void
   setShowAuthDialog: (open: boolean) => void
   handleSidebarMouseEnter: () => void
-  handleSidebarMouseLeave: () => void
-  closeButtonRef: React.RefObject<HTMLDivElement>
+  handleSidebarMouseLeave: (e: React.MouseEvent) => void
+  closeButtonRef: React.RefObject<HTMLDivElement | null>
 }
 
 const SidebarHeader = memo(function SidebarHeader({
@@ -1598,58 +1556,6 @@ const SidebarHeader = memo(function SidebarHeader({
   )
 })
 
-// Isolated Help Section - subscribes to agentsHelpPopoverOpenAtom internally
-// to prevent sidebar re-renders when popover opens/closes
-interface HelpSectionProps {
-  isMobile: boolean
-}
-
-const HelpSection = memo(function HelpSection({ isMobile }: HelpSectionProps) {
-  const [helpPopoverOpen, setHelpPopoverOpen] = useAtom(agentsHelpPopoverOpenAtom)
-  const [blockHelpTooltip, setBlockHelpTooltip] = useState(false)
-  const prevHelpPopoverOpen = useRef(false)
-  const helpButtonRef = useRef<HTMLButtonElement>(null)
-
-  // Handle tooltip blocking when popover closes
-  useEffect(() => {
-    if (prevHelpPopoverOpen.current && !helpPopoverOpen) {
-      helpButtonRef.current?.blur()
-      setBlockHelpTooltip(true)
-      const timer = setTimeout(() => setBlockHelpTooltip(false), 300)
-      prevHelpPopoverOpen.current = helpPopoverOpen
-      return () => clearTimeout(timer)
-    }
-    prevHelpPopoverOpen.current = helpPopoverOpen
-  }, [helpPopoverOpen])
-
-  return (
-    <Tooltip
-      delayDuration={500}
-      open={helpPopoverOpen || blockHelpTooltip ? false : undefined}
-    >
-      <TooltipTrigger asChild>
-        <div>
-          <AgentsHelpPopover
-            open={helpPopoverOpen}
-            onOpenChange={setHelpPopoverOpen}
-            isMobile={isMobile}
-          >
-            <button
-              ref={helpButtonRef}
-              type="button"
-              className="flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-              suppressHydrationWarning
-            >
-              <QuestionCircleIcon className="h-4 w-4" />
-            </button>
-          </AgentsHelpPopover>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>Help</TooltipContent>
-    </Tooltip>
-  )
-})
-
 export function AgentsSidebar({
   userId = "demo-user-id",
   clerkUser = null,
@@ -1668,7 +1574,9 @@ export function AgentsSidebar({
   const previousChatId = useAtomValue(previousAgentChatIdAtom)
   const autoAdvanceTarget = useAtomValue(autoAdvanceTargetAtom)
   const [selectedDraftId, setSelectedDraftId] = useAtom(selectedDraftIdAtom)
+  const showNewChatForm = useAtomValue(showNewChatFormAtom)
   const setShowNewChatForm = useSetAtom(showNewChatFormAtom)
+  const desktopView = useAtomValue(desktopViewAtom)
   const setDesktopView = useSetAtom(desktopViewAtom)
   const [loadingSubChats] = useAtom(loadingSubChatsAtom)
   const pendingQuestions = useAtomValue(pendingUserQuestionsAtom)
@@ -1710,7 +1618,7 @@ export function AgentsSidebar({
 
   // Resolved hotkeys for tooltips
   const { primary: newWorkspaceHotkey, alt: newWorkspaceAltHotkey } = useResolvedHotkeyDisplayWithAlt("new-workspace")
-  const settingsHotkey = useResolvedHotkeyDisplay("open-settings")
+  const betaKanbanEnabled = useAtomValue(betaKanbanEnabledAtom)
 
   // Rename dialog state
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
@@ -2567,6 +2475,49 @@ export function AgentsSidebar({
     }
   }
 
+  const handleOpenThreadsView = useCallback(() => {
+    setDesktopView(null)
+    setShowNewChatForm(false)
+    setSelectedDraftId(null)
+
+    if (selectedChatId || !previousChatId) return
+
+    const previousChat = agentChats?.find(
+      (chat) => chat.id === previousChatId || chat.id === `remote_${previousChatId}`,
+    )
+    const isRemote = previousChat?.isRemote ?? selectedChatIsRemote
+    setSelectedChatId(previousChatId)
+    setSelectedChatIsRemote(isRemote)
+    setChatSourceMode(isRemote ? "sandbox" : "local")
+  }, [
+    setDesktopView,
+    setShowNewChatForm,
+    setSelectedDraftId,
+    selectedChatId,
+    previousChatId,
+    agentChats,
+    selectedChatIsRemote,
+    setSelectedChatId,
+    setSelectedChatIsRemote,
+    setChatSourceMode,
+  ])
+
+  const handleOpenTasksView = useCallback(() => {
+    setSelectedChatId(null)
+    setSelectedDraftId(null)
+    setShowNewChatForm(false)
+    setDesktopView(null)
+  }, [setSelectedChatId, setSelectedDraftId, setShowNewChatForm, setDesktopView])
+
+  const isSettingsView = desktopView === "settings"
+  const isThreadsView = desktopView === null && !!selectedChatId
+  const isTasksView =
+    betaKanbanEnabled &&
+    desktopView === null &&
+    !selectedChatId &&
+    !selectedDraftId &&
+    !showNewChatForm
+
   const handleChatClick = useCallback(async (
     chatId: string,
     e?: React.MouseEvent,
@@ -3105,7 +3056,7 @@ export function AgentsSidebar({
   const sidebarContent = (
     <div
       className={cn(
-        "group/sidebar flex flex-col gap-0 overflow-hidden select-none",
+        "group/sidebar flex gap-0 overflow-hidden select-none",
         isMobileFullscreen
           ? "h-full w-full bg-background"
           : "h-full bg-tl-background",
@@ -3115,6 +3066,83 @@ export function AgentsSidebar({
       data-mobile-fullscreen={isMobileFullscreen || undefined}
       data-sidebar-content
     >
+      {!isMobileFullscreen && (
+        <div
+          className={cn(
+            "w-11 flex-shrink-0 border-r border-border/50 bg-background/40 px-1.5 pb-2 flex flex-col",
+            isDesktop && !isFullscreen ? "pt-10" : "pt-2",
+          )}
+          data-sidebar-content
+        >
+          <div className="flex flex-col gap-1">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Threads"
+                  onClick={handleOpenThreadsView}
+                  className={cn(
+                    "flex items-center justify-center h-8 w-8 rounded-md transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+                    isThreadsView
+                      ? "bg-foreground/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  )}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Threads</TooltipContent>
+            </Tooltip>
+
+            {betaKanbanEnabled && (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Tasks"
+                    onClick={handleOpenTasksView}
+                    className={cn(
+                      "flex items-center justify-center h-8 w-8 rounded-md transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+                      isTasksView
+                        ? "bg-foreground/10 text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <Columns3 className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Tasks</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          <div className="mt-auto">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Settings"
+                  onClick={() => {
+                    setSettingsActiveTab("preferences")
+                    setSettingsDialogOpen(true)
+                  }}
+                  className={cn(
+                    "flex items-center justify-center h-8 w-8 rounded-md transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70",
+                    isSettingsView
+                      ? "bg-foreground/10 text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  )}
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Settings</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 min-w-0 flex flex-col">
       {/* Header area - isolated component to prevent re-renders when dropdown opens */}
       <SidebarHeader
         isDesktop={isDesktop}
@@ -3432,55 +3460,20 @@ export function AgentsSidebar({
             onAnimationComplete={() => {
               hasFooterAnimated.current = true
             }}
-            className="p-2 pt-2 flex flex-col gap-2"
+            className="p-2 pt-2"
           >
             <div className="flex items-center">
               <div className="flex items-center gap-1">
-                {/* Settings Button */}
-                <Tooltip delayDuration={500}>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSettingsActiveTab("preferences")
-                        setSettingsDialogOpen(true)
-                      }}
-                      className="flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] outline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
-                    >
-                      <SettingsIcon className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Settings{settingsHotkey && <> <Kbd>{settingsHotkey}</Kbd></>}</TooltipContent>
-                </Tooltip>
-
-                {/* Help Button - isolated component to prevent sidebar re-renders */}
-                <HelpSection isMobile={isMobileFullscreen} />
-
-                {/* Kanban View Button - isolated component */}
-                <KanbanButton />
-
                 {/* Archive Button - isolated component to prevent sidebar re-renders */}
                 <ArchiveSection archivedChatsCount={archivedChatsCount} />
               </div>
 
               <div className="flex-1" />
             </div>
-
-            {/* Feedback Button */}
-            <ButtonCustom
-              onClick={() => window.open(FEEDBACK_URL, "_blank")}
-              variant="outline"
-              size="sm"
-              className={cn(
-                "px-2 w-full hover:bg-foreground/10 transition-[background-color,transform] duration-150 ease-out active:scale-[0.97] text-foreground rounded-lg gap-1.5",
-                isMobileFullscreen ? "h-10" : "h-7",
-              )}
-            >
-              <span className="text-sm font-medium">Feedback</span>
-            </ButtonCustom>
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 
