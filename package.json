@@ -7,7 +7,9 @@
   "company": "SpiritDevs",
   "main": "out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "node scripts/dev.mjs",
+    "dev:app": "electron-vite dev",
+    "dev:auth-server": "node scripts/dev-auth-server.mjs",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "package": "electron-builder --dir",
