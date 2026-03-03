@@ -3,7 +3,7 @@
  * Allows users to open jarvis from terminal with: jarvis . or jarvis /path/to/project
  *
  * Based on PR #16 by @caffeinum (Aleksey Bykhun)
- * https://github.com/21st-dev/jarvis/pull/16
+ * https://github.com/jarvis-dev/jarvis/pull/16
  */
 
 import { app } from "electron"

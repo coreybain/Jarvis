@@ -14,9 +14,9 @@ ROOT_DIR="$(cd "$DESKTOP_DIR/../.." && pwd)"
 VERSION=$(node -p "require('$DESKTOP_DIR/package.json').version")
 TAG="v$VERSION"
 
-PUBLIC_REPO="git@github.com:21st-dev/jarvis.git"
-PUBLIC_REPO_HTTPS="https://github.com/21st-dev/jarvis"
-PRIVATE_REPO="21st-dev/21st"
+PUBLIC_REPO="git@github.com:jarvis-dev/jarvis.git"
+PUBLIC_REPO_HTTPS="https://github.com/jarvis-dev/jarvis"
+PRIVATE_REPO="jarvis-dev/jarvis"
 TEMP_DIR="/tmp/jarvis-sync-$$"
 
 echo "🔄 Syncing desktop app to public repository..."

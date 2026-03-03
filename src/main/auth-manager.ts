@@ -5,9 +5,9 @@ import { AUTH_SERVER_PORT } from "./constants"
 // Get API URL - in packaged app always use production, in dev allow override
 function getApiBaseUrl(): string {
   if (app.isPackaged) {
-    return "https://21st.dev"
+    return "https://jarvis.dev"
   }
-  return import.meta.env.MAIN_VITE_API_URL || "https://21st.dev"
+  return import.meta.env.MAIN_VITE_API_URL || "https://jarvis.dev"
 }
 
 export class AuthManager {
@@ -79,7 +79,7 @@ export class AuthManager {
     const platform = process.platform
     const arch = process.arch
     const version = app.getVersion()
-    return `21st Desktop ${version} (${platform} ${arch})`
+    return `Jarvis Desktop ${version} (${platform} ${arch})`
   }
 
   /**

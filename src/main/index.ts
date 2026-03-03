@@ -82,13 +82,13 @@ if (app.isPackaged && !IS_DEV) {
 // In dev mode, allow override via MAIN_VITE_API_URL env variable
 export function getBaseUrl(): string {
   if (app.isPackaged) {
-    return "https://21st.dev"
+    return "https://jarvis.dev"
   }
-  return import.meta.env.MAIN_VITE_API_URL || "https://21st.dev"
+  return import.meta.env.MAIN_VITE_API_URL || "https://jarvis.dev"
 }
 
 export function getAppUrl(): string {
-  return process.env.ELECTRON_RENDERER_URL || "https://21st.dev/agents"
+  return process.env.ELECTRON_RENDERER_URL || "https://jarvis.dev/agents"
 }
 
 // Auth manager singleton (use the one from auth-manager module)
@@ -571,7 +571,7 @@ if (gotTheLock) {
 
     // Set app user model ID for Windows (different in dev to avoid taskbar conflicts)
     if (process.platform === "win32") {
-      app.setAppUserModelId(IS_DEV ? "dev.21st.jarvis.dev" : "dev.21st.jarvis")
+      app.setAppUserModelId(IS_DEV ? "dev.jarvis.jarvis.dev" : "dev.jarvis.jarvis")
     }
 
     console.log(`[App] Starting Jarvis${IS_DEV ? " (DEV)" : ""}...`)
@@ -601,7 +601,7 @@ if (gotTheLock) {
       applicationName: "Jarvis",
       applicationVersion: app.getVersion(),
       version: `Claude Code ${claudeCodeVersion}`,
-      copyright: "Copyright © 2026 21st.dev",
+      copyright: "Copyright © 2026 jarvis.dev",
     })
 
     // Track update availability for menu
@@ -843,7 +843,7 @@ if (gotTheLock) {
               label: "Learn More",
               click: async () => {
                 const { shell } = await import("electron")
-                await shell.openExternal("https://21st.dev")
+                await shell.openExternal("https://jarvis.dev")
               },
             },
           ],

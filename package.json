@@ -251,7 +251,7 @@
     },
     "publish": {
       "provider": "generic",
-      "url": "https://cdn.21st.dev/releases/desktop"
+      "url": "https://cdn.jarvis.dev/releases/desktop"
     }
   },
   "pnpm": {

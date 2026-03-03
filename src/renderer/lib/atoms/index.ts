@@ -572,7 +572,7 @@ export const selectedFullThemeIdAtom = atomWithStorage<string | null>(
  */
 export const systemLightThemeIdAtom = atomWithStorage<string>(
   "preferences:system-light-theme-id",
-  "21st-light", // Default light theme
+  "jarvis-light", // Default light theme
   undefined,
   { getOnInit: true },
 )
@@ -582,7 +582,7 @@ export const systemLightThemeIdAtom = atomWithStorage<string>(
  */
 export const systemDarkThemeIdAtom = atomWithStorage<string>(
   "preferences:system-dark-theme-id",
-  "21st-dark", // Default dark theme
+  "jarvis-dark", // Default dark theme
   undefined,
   { getOnInit: true },
 )
@@ -764,7 +764,7 @@ export const billingMethodAtom = atomWithStorage<BillingMethod>(
 )
 
 // Whether user has completed Anthropic OAuth during onboarding
-// This is used to show the onboarding screen after 21st.dev sign-in
+// This is used to show the onboarding screen after jarvis.dev sign-in
 // Reset on logout
 export const anthropicOnboardingCompletedAtom = atomWithStorage<boolean>(
   "onboarding:anthropic-completed",
@@ -866,7 +866,7 @@ export type SessionInfo = {
 // Persisted to localStorage so MCP tools are visible after page refresh
 // Updated when a new chat session starts
 export const sessionInfoAtom = atomWithStorage<SessionInfo | null>(
-  "21st-session-info",
+  "jarvis-session-info",
   null,
   undefined,
   { getOnInit: true },

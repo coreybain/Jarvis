@@ -74,8 +74,8 @@ export function getDisplayPath(filePath: string, projectPath?: string): string {
       return filePath.slice(prefix.length)
     }
   }
-  // Handle worktree paths: /.21st/worktrees/{chatId}/{subChatId}/relativePath
-  const worktreeMatch = filePath.match(/\.21st\/worktrees\/[^/]+\/[^/]+\/(.+)$/)
+  // Handle worktree paths: /.jarvis/worktrees/{chatId}/{subChatId}/relativePath
+  const worktreeMatch = filePath.match(/\.jarvis\/worktrees\/[^/]+\/[^/]+\/(.+)$/)
   if (worktreeMatch) {
     return worktreeMatch[1]
   }
